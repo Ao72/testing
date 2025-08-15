@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube Live Chat Replay</title>
+    <style>
+        :root {
+            --yt-live-chat-primary-text-color: #f1f1f1;
+            --yt-live-chat-secondary-text-color: #aaa;
+            --yt-live-chat-background-color: #181818;
+            --yt-live-chat-header-background-color: #212121;
+            --yt-live-chat-item-background-color: #181818;
+            --yt-live-chat-item-background-hover-color: #2c2c2c;
+            --yt-live-chat-border-color: #3b3b3b;
+            --yt-live-chat-author-name-color: #aaa;
+            
+            --yt-badge-moderator-background-color: #5a835a;
+            --yt-badge-member-background-color: #0f8059;
+            --yt-badge-new-member-background-color: #0f8059;
+        }
+
+        body {
+            font-family: "Roboto", Arial, sans-serif;
+            background-color: #0f0f0f;
+            color: var(--yt-live-chat-primary-text-color);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .chat-container {
+            width: 100%;
+            max-width: 360px;
+            height: 80vh;
+            max-height: 700px;
+            display: flex;
+            flex-direction: column;
+            background-color: var(--yt-live-chat-background-color);
+            border: 1px solid var(--yt-live-chat-border-color);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .chat-header {
+            padding: 15px;
+            font-size: 16px;
+            font-weight: 500;
+            background-color: var(--yt-live-chat-header-background-color);
+            border-bottom: 1px solid var(--yt-live-chat-border-color);
+            text-align: center;
+        }
+
+        .chat-messages {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 12px 15px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-messages::-webkit-scrollbar {
+            width: 8px;
+        }
+        .chat-messages::-webkit-scrollbar-track {
+            background: var(--yt-live-chat-background-color);
+        }
+        .chat-messages::-webkit-scrollbar-thumb {
+            background-color: #555;
+            border-radius: 4px;
+        }
+
+        .chat-message {
+            display: flex;
+            align-items: flex-start;
+            padding: 8px 4px;
+            font-size: 14px;
+            line-height: 1.4;
+            border-radius: 4px;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .chat-message:hover {
+            background-color: var(--yt-live-chat-item-background-hover-color);
+        }
+
+        .author-avatar {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            margin-right: 12px;
+            flex-shrink: 0;
+        }
+
+        .message-content {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .message-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 2px;
+        }
+
+        .timestamp {
+            color: var(--yt-live-chat-secondary-text-color);
+            font-size: 12px;
+            margin-right: 8px;
+        }
+        
+        .author-info {
+             display: flex;
+             align-items: center;
+        }
+        
+        .author-badge {
+            display: inline-block;
+            margin-right: 6px;
+            border-radius: 2px;
+            padding: 2px 4px;
+            font-size: 11px;
+            font-weight: 500;
+            color: white;
+            vertical-align: middle;
+        }
+        
+        .badge-moderator {
+            background-color: var(--yt-badge-moderator-background-color);
+        }
+
+        .badge-member {
+            background-color: var(--yt-badge-member-background-color);
+        }
+        
+        .author-name {
+            color: var(--yt-live-chat-author-name-color);
+            font-weight: 500;
+        }
+        
+        .author-name.moderator {
+             color: #6db26d;
+        }
+        
+        .author-name.member {
+             color: #2ba640;
+        }
+
+        .message-text {
+            word-wrap: break-word;
+            word-break: break-word;
+        }
+
+        .message-text .emote {
+            width: 24px;
+            height: 24px;
+            vertical-align: middle;
+            margin: -2px 1px;
+        }
+
+        .chat-input-area {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            border-top: 1px solid var(--yt-live-chat-border-color);
+            background-color: var(--yt-live-chat-header-background-color);
+        }
+        
+        .chat-input-area .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            margin-right: 12px;
+        }
+
+        .chat-input-area input {
+            flex-grow: 1;
+            border: none;
+            background-color: var(--yt-live-chat-background-color);
+            border-radius: 18px;
+            padding: 8px 12px;
+            color: var(--yt-live-chat-primary-text-color);
+            font-size: 14px;
+        }
+        
+        .chat-input-area input:focus {
+            outline: none;
+            box-shadow: 0 0 0 1px var(--yt-live-chat-border-color) inset;
+        }
+        
+        .chat-input-area button {
+             background: none;
+             border: none;
+             color: var(--yt-live-chat-secondary-text-color);
+             cursor: pointer;
+             padding: 8px;
+             margin-left: 8px;
+        }
+        
+        .chat-input-area button svg {
+            width: 24px;
+            height: 24px;
+            fill: currentColor;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="chat-container">
+        <div class="chat-header">Live Chat Replay</div>
+        <div class="chat-messages" id="chat-messages-container">
+            <!-- Messages will be injected here by JavaScript -->
+        </div>
+        <div class="chat-input-area">
+            <img src="https://yt3.ggpht.com/a/default-user=s40-c-k-c0x00ffffff-no-rj" class="user-avatar" alt="User Avatar">
+            <input type="text" placeholder="Say something..." disabled>
+            <button aria-label="Send message">
+                <svg viewBox="0 0 24 24" preserveAspectRatio="xMidYMid meet" focusable="false">
+                    <g>
+                        <path d="M4,12l1.41,1.41L12,6.83l6.59,6.58L20,12l-8-8L4,12z M4,20h16v-2H4V20z"></path>
+                    </g>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const chatData = [
+            { "action_type": "add_chat_item", "author": { "id": "UClpFFjb4ofbFf9JFQVtpWUw", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/Ow64pn9BHej2e90NX7Zn00PiXRGYdA8VMTZUQ1kzSXgYZ9YlhfjJ074hG32fRvCsO9q3UGya7Q" }], "name": "Kazu kulfi" }, "emotes": [{ "id": "\ud83d\ude21", "images": [{ "id": "source", "url": "https://fonts.gstatic.com/s/e/notoemoji/15.1/1f621/72.png" }], "is_custom_emoji": false, "name": ":pouting_face:" }, { "id": "\ud83d\ude20", "images": [{ "id": "source", "url": "https://fonts.gstatic.com/s/e/notoemoji/15.1/1f620/72.png" }], "is_custom_emoji": false, "name": ":angry_face:" }], "message": ":pouting_face::pouting_face::angry_face:", "time_text": "-20:21" },
+            { "action_type": "add_chat_item", "author": { "id": "UC2gfjkJGuTuy7KDQuOhAXEw", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/ytc/AIdro_lBrmyh4qvbhvjQIMgUtHcqP5tXeWe7n5N2PNm5S-Kamw8" }], "name": "amit mallick" }, "message": "kis ko chaiye membership aur ek kar ra ha hun gift", "time_text": "-18:39" },
+            { "action_type": "add_chat_item", "author": { "id": "UCL2-4R7BvNtgaUguZiwDs-w", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/cbkF_9lxfSPuCxBBrLu5KbHULcXvzn-hz-I4y1w_FXGbQ_nTghwmhrPbVVaH6LWsjEv_4rYrCQ" }], "name": "Pranav PC" }, "message": "aaj late", "time_text": "-18:20" },
+            { "action_type": "add_chat_item", "author": { "id": "UChK7G1RhUbIUyvRVRpOZXmQ", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/3xxxyl5N6zh88ru_RaXqQf93oR9KSSUYIsg1wlVIO7oobG9G27_x6b_1zrb7FPmo7SRcsYtz" }], "name": "Md Tanzeel Khan " }, "emotes": [{ "id": "UCkszU2WH9gy1mb0dV-11UJg/YvgfY-LIBpjChgHKyYCQBg", "images": [{ "id": "source", "url": "https://yt3.ggpht.com/y8ppa6GcJoRUdw7GwmjDmTAnSkeIkUptZMVQuFmFaTlF_CVIL7YP7hH7hd0TJbd8p9w67IM" }], "is_custom_emoji": true, "name": ":hand-orange-covering-eyes:" }], "message": "Bhai ek do memberships humein bhi mil jati toooo.....:hand-orange-covering-eyes:", "time_text": "-17:19" },
+            { "action_type": "add_chat_item", "author": { "id": "UC2gfjkJGuTuy7KDQuOhAXEw", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/ytc/AIdro_lBrmyh4qvbhvjQIMgUtHcqP5tXeWe7n5N2PNm5S-Kamw8" }], "name": "amit mallick" }, "message": "ok", "time_text": "-16:48" },
+            { "action_type": "add_chat_item", "author": { "id": "UChK7G1RhUbIUyvRVRpOZXmQ", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/3xxxyl5N6zh88ru_RaXqQf93oR9KSSUYIsg1wlVIO7oobG9G27_x6b_1zrb7FPmo7SRcsYtz" }], "name": "Md Tanzeel Khan " }, "message": "bhai ek bhi chelega mujhe...", "time_text": "-16:37" },
+            { "action_type": "add_chat_item", "author": { "badges": [{ "title": "Member (6 months)" }], "id": "UClpFFjb4ofbFf9JFQVtpWUw", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/Ow64pn9BHej2e90NX7Zn00PiXRGYdA8VMTZUQ1kzSXgYZ9YlhfjJ074hG32fRvCsO9q3UGya7Q" }], "name": "Kazu kulfi" }, "message": "holy fuck", "time_text": "-16:24" },
+            { "action_type": "add_chat_item", "author": { "id": "UCsb47bPBxFZZJvo9-jKihWA", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/yJvBaJUPINDhjKsjPraXuzer1VLNBT6YTiqIjdRkAIsyiNLEE9uFV69I9AZjL5uCnD2Dw6AKTy8" }], "name": "Suros" }, "emotes": [{ "id": "UCkszU2WH9gy1mb0dV-11UJg/LsMfY8P6G-yckNAPjoWA8AI", "images": [{ "id": "source", "url": "https://yt3.ggpht.com/2Ht4KImoWDlCddiDQVuzSJwpEb59nZJ576ckfaMh57oqz2pUkkgVTXV8osqUOgFHZdUISJM" }], "is_custom_emoji": true, "name": ":face-blue-wide-eyes:" }], "message": "@Kazu kulfi ise bhi mil gayi:face-blue-wide-eyes:", "time_text": "-16:17" },
+            { "action_type": "add_chat_item", "author": { "badges": [{ "title": "Member (6 months)" }], "id": "UClpFFjb4ofbFf9JFQVtpWUw", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/Ow64pn9BHej2e90NX7Zn00PiXRGYdA8VMTZUQ1kzSXgYZ9YlhfjJ074hG32fRvCsO9q3UGya7Q" }], "name": "Kazu kulfi" }, "message": "thnk you amit mallick bhaii", "time_text": "-16:07" },
+            { "action_type": "add_chat_item", "author": { "badges": [{ "title": "Member (6 months)" }], "id": "UClpFFjb4ofbFf9JFQVtpWUw", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/Ow64pn9BHej2e90NX7Zn00PiXRGYdA8VMTZUQ1kzSXgYZ9YlhfjJ074hG32fRvCsO9q3UGya7Q" }], "name": "Kazu kulfi" }, "emotes": [{ "id": "\u2764", "images": [{ "id": "source", "url": "https://fonts.gstatic.com/s/e/notoemoji/15.1/2764/72.png" }], "is_custom_emoji": false, "name": ":red_heart:" }], "message": "a lot :red_heart:", "time_text": "-16:04" },
+            { "action_type": "add_chat_item", "author": { "badges": [{ "title": "Member (6 months)" }], "id": "UClpFFjb4ofbFf9JFQVtpWUw", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/Ow64pn9BHej2e90NX7Zn00PiXRGYdA8VMTZUQ1kzSXgYZ9YlhfjJ074hG32fRvCsO9q3UGya7Q" }], "name": "Kazu kulfi" }, "emotes": [{ "id": "\ud83d\ude0e", "images": [{ "id": "source", "url": "https://fonts.gstatic.com/s/e/notoemoji/15.1/1f60e/72.png" }], "is_custom_emoji": false, "name": ":smiling_face_with_sunglasses:" }], "message": "@Suros :smiling_face_with_sunglasses:", "time_text": "-15:46" },
+            { "action_type": "add_chat_item", "author": { "badges": [{ "title": "Member (2 months)" }], "id": "UC2gfjkJGuTuy7KDQuOhAXEw", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/ytc/AIdro_lBrmyh4qvbhvjQIMgUtHcqP5tXeWe7n5N2PNm5S-Kamw8" }], "name": "amit mallick" }, "message": "lol", "time_text": "-15:35" },
+            { "action_type": "add_chat_item", "author": { "id": "UCsb47bPBxFZZJvo9-jKihWA", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/yJvBaJUPINDhjKsjPraXuzer1VLNBT6YTiqIjdRkAIsyiNLEE9uFV69I9AZjL5uCnD2Dw6AKTy8" }], "name": "Suros" }, "message": "bruh khud ko bhi membership gift ho sakte", "time_text": "-15:26" },
+            { "action_type": "add_chat_item", "author": { "badges": [{ "title": "Member (6 months)" }], "id": "UClpFFjb4ofbFf9JFQVtpWUw", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/Ow64pn9BHej2e90NX7Zn00PiXRGYdA8VMTZUQ1kzSXgYZ9YlhfjJ074hG32fRvCsO9q3UGya7Q" }], "name": "Kazu kulfi" }, "message": "LMFAOO", "time_text": "-15:18" },
+            { "action_type": "add_chat_item", "author": { "badges": [{ "title": "Member (6 months)" }], "id": "UClpFFjb4ofbFf9JFQVtpWUw", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/Ow64pn9BHej2e90NX7Zn00PiXRGYdA8VMTZUQ1kzSXgYZ9YlhfjJ074hG32fRvCsO9q3UGya7Q" }], "name": "Kazu kulfi" }, "emotes": [{ "id": "UCFX8baBMCv7FMICtHBg3TGg/eOboZqX1IIGp_9EP0ampwQg", "images": [{ "id": "source", "url": "https://yt3.ggpht.com/3QAfZ0fKMQG87t1t73KCZcGk3XrnZsNwCdaq1oHzTnohMescFuOv3xU-ieBy73Z3IyRdb7555A" }], "is_custom_emoji": true, "name": ":_VishLoL:" }], "message": ":_VishLoL::_VishLoL:", "time_text": "-15:00" },
+            { "action_type": "add_chat_item", "author": { "id": "UCsb47bPBxFZZJvo9-jKihWA", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/yJvBaJUPINDhjKsjPraXuzer1VLNBT6YTiqIjdRkAIsyiNLEE9uFV69I9AZjL5uCnD2Dw6AKTy8" }], "name": "Suros" }, "emotes": [{ "id": "UCkszU2WH9gy1mb0dV-11UJg/7cIfY5niDOmSkNAP08CA6A4", "images": [{ "id": "source", "url": "https://yt3.ggpht.com/FrYgdeZPpvXs-6Mp305ZiimWJ0wV5bcVZctaUy80mnIdwe-P8HRGYAm0OyBtVx8EB9_Dxkc" }], "is_custom_emoji": true, "name": ":eyes-purple-crying:" }], "message": ":eyes-purple-crying:", "time_text": "-14:42" },
+            { "action_type": "add_chat_item", "author": { "id": "UCo2SNaErplyzAWmWgENChWA", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/_ZGcMNQweTmV7t6wjLKzEBBO9KJmmQwXHwxog2EAsLJ4ks5M4Sp0jEJA-YtHUeBh3_R7HPprPf0" }], "name": "Shivananda Padhy" }, "message": "aur bhay kya halchal", "time_text": "-12:58" },
+            { "action_type": "add_chat_item", "author": { "id": "UCpsQi2rymQYFkfBxVC1wgqw", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/ZwaCD4vJpRIffitr7Uz8n9UOBXA78do4wozghJgZmsHmoTXkMGIenIT_YGKDT6PI1YK3-y8BKA" }], "name": "Pheoniz" }, "message": "yo", "time_text": "-11:36" },
+            { "action_type": "add_chat_item", "author": { "badges": [{ "title": "New member" }], "id": "UCBtWAtimsWBk--sS8pR9TyA", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/xQPsSpW39DksYQz54uXJaPdLpwFf5yg9KbfaOWz9gBD91Tjb7LexPZ8T73kNXH9SAbOlg94Pww" }], "name": "Hridanshu XD" }, "message": "dhanyawaad amit bhai", "time_text": "-11:16" },
+            { "action_type": "add_chat_item", "author": { "badges": [{ "title": "Member (2 months)" }], "id": "UC2gfjkJGuTuy7KDQuOhAXEw", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/ytc/AIdro_lBrmyh4qvbhvjQIMgUtHcqP5tXeWe7n5N2PNm5S-Kamw8" }], "name": "amit mallick" }, "message": "welcome bro", "time_text": "-8:03" },
+            { "action_type": "add_chat_item", "author": { "badges": [{ "title": "Member (2 months)" }], "id": "UC2gfjkJGuTuy7KDQuOhAXEw", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/ytc/AIdro_lBrmyh4qvbhvjQIMgUtHcqP5tXeWe7n5N2PNm5S-Kamw8" }], "name": "amit mallick" }, "message": "@suros bhai abhi hi likhna main gift kar raha hun", "time_text": "-6:13" },
+            { "action_type": "add_chat_item", "author": { "badges": [{ "title": "Member (2 months)" }], "id": "UCWo7EJk4xaWw3V7TXQ_mXlA", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/OBjBJDE8DxoSk2Pfver_UH9ZHW40-UXtE7_mK-4VHX_0prxgmlA-_0qx0gKjb6mvOO5oDt69" }], "name": "Anish" }, "emotes": [{ "id": "\ud83d\ude2d", "images": [{ "id": "source", "url": "https://fonts.gstatic.com/s/e/notoemoji/15.1/1f62d/72.png" }], "is_custom_emoji": false, "name": ":loudly_crying_face:" }], "message": "are membership mil gya :loudly_crying_face:", "time_text": "-6:03" },
+            { "action_type": "add_chat_item", "author": { "id": "UC6-4H_WsNFBwQxED-nHiwhA", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/1I-YI3wvBBz4gEirxd6bEu_Orcb1KF3xmqzaZL2GzI1nvlJQqQg_ItnI-_Jxf1IafvEtSvklDw" }], "name": "Harpreet Singh" }, "emotes": [{ "id": "UCkszU2WH9gy1mb0dV-11UJg/b8IfY7zOK9iVkNAP_I2A-AY", "images": [{ "id": "source", "url": "https://yt3.ggpht.com/g6_km98AfdHbN43gvEuNdZ2I07MmzVpArLwEvNBwwPqpZYzszqhRzU_DXALl11TchX5_xFE" }], "is_custom_emoji": true, "name": ":face-purple-crying:" }], "message": ":face-purple-crying:", "time_text": "-6:03" },
+            { "action_type": "add_chat_item", "author": { "id": "UC6-4H_WsNFBwQxED-nHiwhA", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/1I-YI3wvBBz4gEirxd6bEu_Orcb1KF3xmqzaZL2GzI1nvlJQqQg_ItnI-_Jxf1IafvEtSvklDw" }], "name": "Harpreet Singh" }, "emotes": [{ "id": "UCkszU2WH9gy1mb0dV-11UJg/b8IfY7zOK9iVkNAP_I2A-AY", "images": [{ "id": "source", "url": "https://yt3.ggpht.com/g6_km98AfdHbN43gvEuNdZ2I07MmzVpArLwEvNBwwPqpZYzszqhRzU_DXALl11TchX5_xFE" }], "is_custom_emoji": true, "name": ":face-purple-crying:" }], "message": ":face-purple-crying:", "time_text": "-5:41" },
+            { "action_type": "add_chat_item", "author": { "badges": [{ "title": "Member (2 months)" }], "id": "UCWo7EJk4xaWw3V7TXQ_mXlA", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/OBjBJDE8DxoSk2Pfver_UH9ZHW40-UXtE7_mK-4VHX_0prxgmlA-_0qx0gKjb6mvOO5oDt69" }], "name": "Anish" }, "message": "thank you amit bhai", "time_text": "-5:34" },
+            { "action_type": "add_chat_item", "author": { "badges": [{ "title": "Member (2 months)" }], "id": "UCWo7EJk4xaWw3V7TXQ_mXlA", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/OBjBJDE8DxoSk2Pfver_UH9ZHW40-UXtE7_mK-4VHX_0prxgmlA-_0qx0gKjb6mvOO5oDt69" }], "name": "Anish" }, "emotes": [{ "id": "UCFX8baBMCv7FMICtHBg3TGg/vfBGaOjbJ--X_9EP0LfroQI", "images": [{ "id": "source", "url": "https://yt3.ggpht.com/bwbT4NNA4-hSNreXj1mWaGYXmi62qJVDyXzPxVV9IItHZ70Ve_fDXIKu0HT2i2iwZiv1vzDCtw" }], "is_custom_emoji": true, "name": ":_VishCinema:" }], "message": "bro is savior:_VishCinema:", "time_text": "-5:19" },
+            { "action_type": "add_chat_item", "author": { "id": "UCo2SNaErplyzAWmWgENChWA", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/_ZGcMNQweTmV7t6wjLKzEBBO9KJmmQwXHwxog2EAsLJ4ks5M4Sp0jEJA-YtHUeBh3_R7HPprPf0" }], "name": "Shivananda Padhy" }, "message": "aja bhay vishiiii", "time_text": "-5:16" },
+            { "action_type": "add_chat_item", "author": { "id": "UCsb47bPBxFZZJvo9-jKihWA", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/yJvBaJUPINDhjKsjPraXuzer1VLNBT6YTiqIjdRkAIsyiNLEE9uFV69I9AZjL5uCnD2Dw6AKTy8" }], "name": "Suros" }, "message": "@amit mallick nhi milenga bhai random hota hai likhunga tho bhi nhi milenga", "time_text": "-4:53" },
+            { "action_type": "add_chat_item", "author": { "badges": [{ "title": "Member (2 months)" }], "id": "UC2gfjkJGuTuy7KDQuOhAXEw", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/ytc/AIdro_lBrmyh4qvbhvjQIMgUtHcqP5tXeWe7n5N2PNm5S-Kamw8" }], "name": "amit mallick" }, "message": "welcome bro , paise khatam ho gaye good night", "time_text": "-4:50" },
+            { "action_type": "add_chat_item", "author": { "id": "UCsb47bPBxFZZJvo9-jKihWA", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/yJvBaJUPINDhjKsjPraXuzer1VLNBT6YTiqIjdRkAIsyiNLEE9uFV69I9AZjL5uCnD2Dw6AKTy8" }], "name": "Suros" }, "message": "yee le", "time_text": "-4:42" },
+            { "action_type": "add_chat_item", "author": { "id": "UCo2SNaErplyzAWmWgENChWA", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/_ZGcMNQweTmV7t6wjLKzEBBO9KJmmQwXHwxog2EAsLJ4ks5M4Sp0jEJA-YtHUeBh3_R7HPprPf0" }], "name": "Shivananda Padhy" }, "message": "by goodnight kya bhay live nai dekhege kyaa", "time_text": "-3:44" },
+            { "action_type": "add_chat_item", "author": { "badges": [{ "icon_name": "moderator", "title": "Moderator" }], "id": "UCJMLp8-oyfqLHyFxfUpU7Ig", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/Qae0Khsat_K9w3KLI_TUx-usVsmpNVDdoSaJjJqkO8yeQsjDwP1oZiwJ8s2cjd_lZ5HnnDuQ" }], "name": "Fossabot" }, "message": "Jhopdiwaalo, like bhi kar diya karo", "time_text": "-3:23" },
+            { "action_type": "add_chat_item", "author": { "id": "UCsb47bPBxFZZJvo9-jKihWA", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/yJvBaJUPINDhjKsjPraXuzer1VLNBT6YTiqIjdRkAIsyiNLEE9uFV69I9AZjL5uCnD2Dw6AKTy8" }], "name": "Suros" }, "message": "good night bro", "time_text": "-3:12" },
+            { "action_type": "add_chat_item", "author": { "badges": [{ "icon_name": "moderator", "title": "Moderator" }], "id": "UCJMLp8-oyfqLHyFxfUpU7Ig", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/Qae0Khsat_K9w3KLI_TUx-usVsmpNVDdoSaJjJqkO8yeQsjDwP1oZiwJ8s2cjd_lZ5HnnDuQ" }], "name": "Fossabot" }, "message": "Follow me on Twitch:- https://www.twitch.tv/vishislive", "time_text": "-3:11" },
+            { "action_type": "add_chat_item", "author": { "id": "UCsb47bPBxFZZJvo9-jKihWA", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/yJvBaJUPINDhjKsjPraXuzer1VLNBT6YTiqIjdRkAIsyiNLEE9uFV69I9AZjL5uCnD2Dw6AKTy8" }], "name": "Suros" }, "message": "late", "time_text": "-2:43" },
+            { "action_type": "add_chat_item", "author": { "id": "UCo2SNaErplyzAWmWgENChWA", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/_ZGcMNQweTmV7t6wjLKzEBBO9KJmmQwXHwxog2EAsLJ4ks5M4Sp0jEJA-YtHUeBh3_R7HPprPf0" }], "name": "Shivananda Padhy" }, "message": "ajaa bhay vishiiii oyeee", "time_text": "-1:31" },
+            { "action_type": "add_chat_item", "author": { "id": "UCsb47bPBxFZZJvo9-jKihWA", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/yJvBaJUPINDhjKsjPraXuzer1VLNBT6YTiqIjdRkAIsyiNLEE9uFV69I9AZjL5uCnD2Dw6AKTy8" }], "name": "Suros" }, "message": "lateislive", "time_text": "-0:58" },
+            { "action_type": "add_chat_item", "author": { "id": "UCcwC8yJNXaJYtvNdIEUwccg", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/ytc/AIdro_ns2X553yATn-a4dNbQlYESX-WAONmWWrr6QFRM_G7o0VE" }], "name": "Jondeep Nath" }, "emotes": [{ "id": "\ud83d\ude0b", "images": [{ "id": "source", "url": "https://fonts.gstatic.com/s/e/notoemoji/15.1/1f60b/72.png" }], "is_custom_emoji": false, "name": ":face_savoring_food:" }], "message": "hi :face_savoring_food::face_savoring_food:", "time_text": "-0:43" },
+            { "action_type": "add_chat_item", "author": { "id": "UCo2SNaErplyzAWmWgENChWA", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/_ZGcMNQweTmV7t6wjLKzEBBO9KJmmQwXHwxog2EAsLJ4ks5M4Sp0jEJA-YtHUeBh3_R7HPprPf0" }], "name": "Shivananda Padhy" }, "message": "lol", "time_text": "-0:40" },
+            { "action_type": "add_chat_item", "author": { "id": "UCsb47bPBxFZZJvo9-jKihWA", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/yJvBaJUPINDhjKsjPraXuzer1VLNBT6YTiqIjdRkAIsyiNLEE9uFV69I9AZjL5uCnD2Dw6AKTy8" }], "name": "Suros" }, "message": "kitni eding karayenga aja live", "time_text": "-0:22" },
+            { "action_type": "add_chat_item", "author": { "id": "UCo2SNaErplyzAWmWgENChWA", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/_ZGcMNQweTmV7t6wjLKzEBBO9KJmmQwXHwxog2EAsLJ4ks5M4Sp0jEJA-YtHUeBh3_R7HPprPf0" }], "name": "Shivananda Padhy" }, "message": "google me 8 tarikh dikha rah, 12 baje baad khelega kya vish ya agya already game?", "time_text": "-0:14" },
+            { "action_type": "add_chat_item", "author": { "id": "UCcwC8yJNXaJYtvNdIEUwccg", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/ytc/AIdro_ns2X553yATn-a4dNbQlYESX-WAONmWWrr6QFRM_G7o0VE" }], "name": "Jondeep Nath" }, "message": "hi", "time_text": "-0:11" },
+            { "action_type": "add_chat_item", "author": { "id": "UCsb47bPBxFZZJvo9-jKihWA", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/yJvBaJUPINDhjKsjPraXuzer1VLNBT6YTiqIjdRkAIsyiNLEE9uFV69I9AZjL5uCnD2Dw6AKTy8" }], "name": "Suros" }, "message": "W", "time_text": "0:22" },
+            { "action_type": "add_chat_item", "author": { "id": "UCo2SNaErplyzAWmWgENChWA", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/_ZGcMNQweTmV7t6wjLKzEBBO9KJmmQwXHwxog2EAsLJ4ks5M4Sp0jEJA-YtHUeBh3_R7HPprPf0" }], "name": "Shivananda Padhy" }, "message": "W", "time_text": "0:28" },
+            { "action_type": "add_chat_item", "author": { "id": "UC1XC-Ilw7x1Bf5d8fC_FeZA", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/IXi8lkg-gP4KYNLTv-wvjHUrohtLBxtn-Vloy7p9BRRvpfYCZif0j-M52tWDdmciQIIz75_03C4" }], "name": "RAJ*" }, "message": "hlw", "time_text": "0:34" },
+            { "action_type": "add_chat_item", "author": { "id": "UC2uYc039mJyJspnc0nkT85w", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/WD8gBFPjD2QM6M0n9PSJlyXgc4KSjN7QCQkbBDVWSleQwJrFgyzhaQC4QC-Rwr79ndKCaAK1" }], "name": "Mr.chopra " }, "message": "aaj itni late", "time_text": "0:37" },
+            { "action_type": "add_chat_item", "author": { "badges": [{ "title": "Member (2 months)" }], "id": "UCXCmlOKQ3DfW4aQPHTU41-A", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/XnDsjc2XD6LnfYQiU3HaQyF40lJ3ghWsF1ojOlv6QD0kn1Pn7LxyYDMIX76-kYRhFP_NK88jGGA" }], "name": "chaitanya s" }, "message": "wvish", "time_text": "0:38" },
+            { "action_type": "add_chat_item", "author": { "id": "UCV5doVr7Rd4hhQhjjBjP9tA", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/ytc/AIdro_knFNDtVr4UwCFNtTTNhT_iPp2THMb35uGjtV5MfGQEi9g" }], "name": "Arnav" }, "message": "W", "time_text": "0:41" },
+            { "action_type": "add_chat_item", "author": { "id": "UCo2SNaErplyzAWmWgENChWA", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/_ZGcMNQweTmV7t6wjLKzEBBO9KJmmQwXHwxog2EAsLJ4ks5M4Sp0jEJA-YtHUeBh3_R7HPprPf0" }], "name": "Shivananda Padhy" }, "message": "WVish", "time_text": "0:42" },
+            { "action_type": "add_chat_item", "author": { "id": "UCcwC8yJNXaJYtvNdIEUwccg", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/ytc/AIdro_ns2X553yATn-a4dNbQlYESX-WAONmWWrr6QFRM_G7o0VE" }], "name": "Jondeep Nath" }, "emotes": [{ "id": "\ud83d\ude08", "images": [{ "id": "source", "url": "https://fonts.gstatic.com/s/e/notoemoji/15.1/1f608/72.png" }], "is_custom_emoji": false, "name": ":smiling_face_with_horns:" }], "message": "yaaaaaahh:smiling_face_with_horns::smiling_face_with_horns::smiling_face_with_horns::smiling_face_with_horns::smiling_face_with_horns:", "time_text": "0:45" },
+            { "action_type": "add_chat_item", "author": { "id": "UChK7G1RhUbIUyvRVRpOZXmQ", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/3xxxyl5N6zh88ru_RaXqQf93oR9KSSUYIsg1wlVIO7oobG9G27_x6b_1zrb7FPmo7SRcsYtz" }], "name": "Md Tanzeel Khan " }, "emotes": [{ "id": "UCkszU2WH9gy1mb0dV-11UJg/YvgfY-LIBpjChgHKyYCQBg", "images": [{ "id": "source", "url": "https://yt3.ggpht.com/y8ppa6GcJoRUdw7GwmjDmTAnSkeIkUptZMVQuFmFaTlF_CVIL7YP7hH7hd0TJbd8p9w67IM" }], "is_custom_emoji": true, "name": ":hand-orange-covering-eyes:" }], "message": "mujhe vish ki kachi khani hai:hand-orange-covering-eyes:", "time_text": "0:49" },
+            { "action_type": "add_chat_item", "author": { "badges": [{ "title": "Member (6 months)" }], "id": "UCRTPXYDQy1GviyQc6u9uG6g", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/EgVsgq_ec1jlENcNyLk_X846UUZ_czmpS02bdLxfm2uVj6NZcJCyn4-nCJUI3lQVtjY9rEvhFw" }], "name": "Lx Shopon" }, "message": "og firestorm reaction", "time_text": "0:49" },
+            { "action_type": "add_chat_item", "author": { "id": "UCsb47bPBxFZZJvo9-jKihWA", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/yJvBaJUPINDhjKsjPraXuzer1VLNBT6YTiqIjdRkAIsyiNLEE9uFV69I9AZjL5uCnD2Dw6AKTy8" }], "name": "Suros" }, "message": "W", "time_text": "0:53" },
+            { "action_type": "add_chat_item", "author": { "id": "UC1lYxKorzvmPRaXIHLvb_Gg", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/eSSzzwhnlr2bO3KW353GhgW4p1XWgUqSCH1PC6MlIJPBVhFKGAijZYvbEWotIx6Thc-Z0RzK" }], "name": "Dheeraj Kumar" }, "message": "W", "time_text": "0:58" },
+            { "action_type": "add_chat_item", "author": { "badges": [{ "title": "Member (6 months)" }], "id": "UCRTPXYDQy1GviyQc6u9uG6g", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/EgVsgq_ec1jlENcNyLk_X846UUZ_czmpS02bdLxfm2uVj6NZcJCyn4-nCJUI3lQVtjY9rEvhFw" }], "name": "Lx Shopon" }, "message": "og firestorm reaction", "time_text": "1:06" },
+            { "action_type": "add_chat_item", "author": { "id": "UCV5doVr7Rd4hhQhjjBjP9tA", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/ytc/AIdro_knFNDtVr4UwCFNtTTNhT_iPp2THMb35uGjtV5MfGQEi9g" }], "name": "Arnav" }, "emotes": [{ "id": "UCkszU2WH9gy1mb0dV-11UJg/8gF1Xp_zK8jk8gSDrI2wCw", "images": [{ "id": "source", "url": "https://yt3.ggpht.com/DTR9bZd1HOqpRJyz9TKiLb0cqe5Hb84Yi_79A6LWlN1tY-5kXqLDXRmtYVKE9rcqzEghmw" }], "is_custom_emoji": true, "name": ":elbowcough:" }], "message": ":elbowcough:", "time_text": "1:08" },
+            { "action_type": "add_chat_item", "author": { "badges": [{ "title": "New member" }], "id": "UC6-E6gplbzKDmcPR3_4RUGQ", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/u9Jwjnue2EhUl0fLiU-xTi9mTpZTQqxrjtMX-roiasc_IIm0IVY-bn0KN3XqtPArATg6z4Nrlzk" }], "name": "Maulik" }, "message": "yooo", "time_text": "1:09" },
+            { "action_type": "add_chat_item", "author": { "badges": [{ "title": "New member" }], "id": "UC6-E6gplbzKDmcPR3_4RUGQ", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/u9Jwjnue2EhUl0fLiU-xTi9mTpZTQqxrjtMX-roiasc_IIm0IVY-bn0KN3XqtPArATg6z4Nrlzk" }], "name": "Maulik" }, "message": "supp", "time_text": "1:12" },
+            { "action_type": "add_chat_item", "author": { "badges": [{ "title": "Member (6 months)" }], "id": "UClpFFjb4ofbFf9JFQVtpWUw", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/Ow64pn9BHej2e90NX7Zn00PiXRGYdA8VMTZUQ1kzSXgYZ9YlhfjJ074hG32fRvCsO9q3UGya7Q" }], "name": "Kazu kulfi" }, "message": "4 min late", "time_text": "1:17" },
+            { "action_type": "add_chat_item", "author": { "id": "UClNX1802y_gYolOFC9i4cEQ", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/nijiehFQAkfWG77q2GF3IgzwQpZ5mGcpCi0KPuz3B89168J-AgeDRXSkTv1DI4xzipEUTzI7xg" }], "name": "1 cup 2 Senpai" }, "message": "W", "time_text": "1:17" },
+            { "action_type": "add_chat_item", "author": { "badges": [{ "title": "New member" }], "id": "UC6-E6gplbzKDmcPR3_4RUGQ", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/u9Jwjnue2EhUl0fLiU-xTi9mTpZTQqxrjtMX-roiasc_IIm0IVY-bn0KN3XqtPArATg6z4Nrlzk" }], "name": "Maulik" }, "message": "fricking w gang", "time_text": "1:18" },
+            { "action_type": "add_chat_item", "author": { "id": "UCrW6gEU_6786UZUhL38urbg", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/fhn9HXso2CZ4Hjc-VFZUp1G_nND72JTo-okiZ10c9FdO3Q8_SUBxrDEkPtM1KlgQzIKZdEiF" }], "name": "kel" }, "message": "amish ka video bdhiya hai tumse woo rdr stream kr riha every night", "time_text": "1:20" },
+            { "action_type": "add_chat_item", "author": { "badges": [{ "title": "Member (6 months)" }], "id": "UCVhSGKmIc2iwwUqj5BezPEw", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/9YbIhK30fudU-DekJp1ZusZj2WAszGOB62BIP0RQ7XYrVtvmcGza5WShC9JYMQ2CiFziHstq" }], "name": "Rolex" }, "message": "yo", "time_text": "1:21" },
+            { "action_type": "add_chat_item", "author": { "id": "UChK7G1RhUbIUyvRVRpOZXmQ", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/3xxxyl5N6zh88ru_RaXqQf93oR9KSSUYIsg1wlVIO7oobG9G27_x6b_1zrb7FPmo7SRcsYtz" }], "name": "Md Tanzeel Khan " }, "emotes": [{ "id": "UCkszU2WH9gy1mb0dV-11UJg/m8MfY4jbFsWJhL0PyouA2Ak", "images": [{ "id": "source", "url": "https://yt3.ggpht.com/I0Mem9dU_IZ4a9cQPzR0pUJ8bH-882Eg0sDQjBmPcHA6Oq0uXOZcsjPvPbtormx91Ha2eRA" }], "is_custom_emoji": true, "name": ":face-red-heart-shape:" }], "message": "vish babu:face-red-heart-shape::face-red-heart-shape::face-red-heart-shape:", "time_text": "1:25" },
+            { "action_type": "add_chat_item", "author": { "badges": [{ "title": "New member" }], "id": "UC6-E6gplbzKDmcPR3_4RUGQ", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/u9Jwjnue2EhUl0fLiU-xTi9mTpZTQqxrjtMX-roiasc_IIm0IVY-bn0KN3XqtPArATg6z4Nrlzk" }], "name": "Maulik" }, "message": "@kazu sup twin", "time_text": "1:25" },
+            { "action_type": "add_chat_item", "author": { "id": "UC-FMv3TYkeMiAfgXuRt2g9Q", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/1I_OJTwLSfgLD98g_hYuKmdah7nn2pjrqdIpm-Ytypp7jbclwVnK-YGURM-prCtiKKCzqh_vKA" }], "name": "Mohit Sonara" }, "message": "ek to late aaya upper se timer lagata hai", "time_text": "1:29" },
+            { "action_type": "add_chat_item", "author": { "id": "UCcwC8yJNXaJYtvNdIEUwccg", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/ytc/AIdro_ns2X553yATn-a4dNbQlYESX-WAONmWWrr6QFRM_G7o0VE" }], "name": "Jondeep Nath" }, "emotes": [{ "id": "\ud83d\ude35\u200d\ud83d\udcab", "images": [{ "id": "source", "url": "https://fonts.gstatic.com/s/e/notoemoji/15.1/1f635_200d_1f4ab/72.png" }], "is_custom_emoji": false, "name": ":face_with_spiral_eyes:" }], "message": "cooo coo colie :face_with_spiral_eyes::face_with_spiral_eyes::face_with_spiral_eyes:", "time_text": "1:32" },
+            { "action_type": "add_chat_item", "author": { "badges": [{ "title": "New member" }], "id": "UC6-E6gplbzKDmcPR3_4RUGQ", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/u9Jwjnue2EhUl0fLiU-xTi9mTpZTQqxrjtMX-roiasc_IIm0IVY-bn0KN3XqtPArATg6z4Nrlzk" }], "name": "Maulik" }, "message": "yo", "time_text": "1:41" },
+            { "action_type": "add_chat_item", "author": { "id": "UC4hmZvzlybFze5DQFHktq4Q", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/b3iZQprGRG8w-FdVOjSIERx-UyezKLyrj-1sDWsWnZb-wUkgo4FKn_fiwGRDc978kvZd_geoEA" }], "name": "Ram Khapandi" }, "message": "or bhai kem cho", "time_text": "1:42" },
+            { "action_type": "add_chat_item", "author": { "badges": [{ "title": "Member (2 months)" }], "id": "UCXCmlOKQ3DfW4aQPHTU41-A", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/XnDsjc2XD6LnfYQiU3HaQyF40lJ3ghWsF1ojOlv6QD0kn1Pn7LxyYDMIX76-kYRhFP_NK88jGGA" }], "name": "chaitanya s" }, "message": "WVISH", "time_text": "1:43" },
+            { "action_type": "add_chat_item", "author": { "id": "UChhYnpK998fjHc_FLKfJO9Q", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/ytc/AIdro_nn2r27xgt-QLsA4NOafS588bIhGJEP80r8XEC4pJEMwtmsmIosL5hG9gzQ2AyEbG8G0A" }], "name": "Salman Khan" }, "message": "wish me happy birthday Ashu", "time_text": "1:44" },
+            { "action_type": "add_chat_item", "author": { "badges": [{ "title": "New member" }], "id": "UC6-E6gplbzKDmcPR3_4RUGQ", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/u9Jwjnue2EhUl0fLiU-xTi9mTpZTQqxrjtMX-roiasc_IIm0IVY-bn0KN3XqtPArATg6z4Nrlzk" }], "name": "Maulik" }, "message": "wvish", "time_text": "1:45" },
+            { "action_type": "add_chat_item", "author": { "id": "UCsb47bPBxFZZJvo9-jKihWA", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/yJvBaJUPINDhjKsjPraXuzer1VLNBT6YTiqIjdRkAIsyiNLEE9uFV69I9AZjL5uCnD2Dw6AKTy8" }], "name": "Suros" }, "emotes": [{ "id": "UCkszU2WH9gy1mb0dV-11UJg/hands-yellow-heart-red", "images": [{ "id": "source", "url": "https://yt3.ggpht.com/qWSu2zrgOKLKgt_E-XUP9e30aydT5aF3TnNjvfBL55cTu1clP8Eoh5exN3NDPEVPYmasmoA" }], "is_custom_emoji": true, "name": ":hands-yellow-heart-red:" }], "message": ":hands-yellow-heart-red:", "time_text": "1:45" },
+            { "action_type": "add_chat_item", "author": { "id": "UCENE7TbJ9A6QOR5LDH4qQfg", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/ec9LAkdFH20iDmO1gKK4X5b2jcxYNWLV4gz5wx9oCmqj4eyvMXfyYzdqE1gXTUHQZ3oj8BSFlw" }], "name": "Dr.Carnage" }, "message": "powerhouseeeee", "time_text": "1:46" },
+            { "action_type": "add_chat_item", "author": { "badges": [{ "title": "Member (1 year)" }], "id": "UChnaoR4XWT9uoF797sEwA9Q", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/lou_0NQwxceiW61AfUWzyZaqdjgp1GbYRocqhlldj4MtOmR_oD3KwJBHKgiQc9Do32rpZ3zd" }], "name": "Swarup Ranjan Sahoo" }, "emotes": [{ "id": "\ud83e\udef0", "images": [{ "id": "source", "url": "https://fonts.gstatic.com/s/e/notoemoji/15.1/1faf0/72.png" }], "is_custom_emoji": false, "name": ":hand_with_index_finger_and_thumb_crossed:" }], "message": "hello bhai:hand_with_index_finger_and_thumb_crossed:", "time_text": "1:48" },
+            { "action_type": "add_chat_item", "author": { "id": "UCXoIglO57v1ckAM7AupHrrg", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/v_6epdaFUDSbEvYY8Kz7YnAgeomILb1eINJrUsjyTmSmNy9XQWLgToQ75yKEVdM9ajUxNjmvhw" }], "name": "Abhishek Sharma" }, "message": "yo yo vish bhai", "time_text": "1:50" },
+            { "action_type": "add_chat_item", "author": { "badges": [{ "title": "Member (6 months)" }], "id": "UClpFFjb4ofbFf9JFQVtpWUw", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/Ow64pn9BHej2e90NX7Zn00PiXRGYdA8VMTZUQ1kzSXgYZ9YlhfjJ074hG32fRvCsO9q3UGya7Q" }], "name": "Kazu kulfi" }, "message": "W goon", "time_text": "1:53" },
+            { "action_type": "add_chat_item", "author": { "id": "UCD5frZNA2jMbEitfP4zNmKA", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/F483ubXj_dKDMza7DGfvjaGU6HSERpC5xHkgc-4etjHGW7CMYbWrJXUR-A6a4P6b12Wfx3QRwY0" }], "name": "VINTAGE" }, "message": "yoyo", "time_text": "1:55" },
+            { "action_type": "add_chat_item", "author": { "badges": [{ "title": "New member" }], "id": "UC6-E6gplbzKDmcPR3_4RUGQ", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/u9Jwjnue2EhUl0fLiU-xTi9mTpZTQqxrjtMX-roiasc_IIm0IVY-bn0KN3XqtPArATg6z4Nrlzk" }], "name": "Maulik" }, "message": "@chaitanya s yooo", "time_text": "1:55" },
+            { "action_type": "add_chat_item", "author": { "id": "UC2uYc039mJyJspnc0nkT85w", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/WD8gBFPjD2QM6M0n9PSJlyXgc4KSjN7QCQkbBDVWSleQwJrFgyzhaQC4QC-Rwr79ndKCaAK1" }], "name": "Mr.chopra " }, "message": "isse acha twitch pe ajata", "time_text": "1:56" },
+            { "action_type": "add_chat_item", "author": { "badges": [{ "icon_name": "moderator", "title": "Moderator" }, { "title": "Member (2 months)" }], "id": "UCY0eRt2aOSy1uWsKfYjNsSA", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/sUf2gyaFUhCvvLWPg2pWZhNlppAUvELCi25GZF8L-sW3eGaNUYsxMYpwRsAhOoNHLJqhGk9R" }], "name": "Arif" }, "message": "hllllllllo", "time_text": "1:57" },
+            { "action_type": "add_chat_item", "author": { "badges": [{ "icon_name": "moderator", "title": "Moderator" }], "id": "UCJMLp8-oyfqLHyFxfUpU7Ig", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/Qae0Khsat_K9w3KLI_TUx-usVsmpNVDdoSaJjJqkO8yeQsjDwP1oZiwJ8s2cjd_lZ5HnnDuQ" }], "name": "Fossabot" }, "message": "Follow me on Twitch:- https://www.twitch.tv/vishislive", "time_text": "1:59" },
+            { "action_type": "add_chat_item", "author": { "id": "UC-FMv3TYkeMiAfgXuRt2g9Q", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/1I_OJTwLSfgLD98g_hYuKmdah7nn2pjrqdIpm-Ytypp7jbclwVnK-YGURM-prCtiKKCzqh_vKA" }], "name": "Mohit Sonara" }, "message": "hey", "time_text": "2:01" },
+            { "action_type": "add_chat_item", "author": { "id": "UC4hmZvzlybFze5DQFHktq4Q", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/b3iZQprGRG8w-FdVOjSIERx-UyezKLyrj-1sDWsWnZb-wUkgo4FKn_fiwGRDc978kvZd_geoEA" }], "name": "Ram Khapandi" }, "message": "copyright incoming", "time_text": "2:02" },
+            { "action_type": "add_chat_item", "author": { "badges": [{ "icon_name": "moderator", "title": "Moderator" }, { "title": "Member (2 months)" }], "id": "UCY0eRt2aOSy1uWsKfYjNsSA", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/sUf2gyaFUhCvvLWPg2pWZhNlppAUvELCi25GZF8L-sW3eGaNUYsxMYpwRsAhOoNHLJqhGk9R" }], "name": "Arif" }, "message": "kaise re", "time_text": "2:04" },
+            { "action_type": "add_chat_item", "author": { "id": "UCuk1EM1S1eJ2e9pPSIjhFtg", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/umSCIQKGrV2Y9QA8XvbR8t6kRsk1A09sy43lICiidfeT1t-XYb4LWPmYdvStVbLmCKpvXoeWPg" }], "name": "_Makhan_Singh" }, "message": "War 2 song ", "time_text": "2:04" },
+            { "action_type": "add_chat_item", "author": { "badges": [{ "title": "Member (1 year)" }], "id": "UChnaoR4XWT9uoF797sEwA9Q", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/lou_0NQwxceiW61AfUWzyZaqdjgp1GbYRocqhlldj4MtOmR_oD3KwJBHKgiQc9Do32rpZ3zd" }], "name": "Swarup Ranjan Sahoo" }, "message": "what's app bhai ki hall", "time_text": "2:05" },
+            { "action_type": "add_chat_item", "author": { "badges": [{ "title": "New member" }], "id": "UC6-E6gplbzKDmcPR3_4RUGQ", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/u9Jwjnue2EhUl0fLiU-xTi9mTpZTQqxrjtMX-roiasc_IIm0IVY-bn0KN3XqtPArATg6z4Nrlzk" }], "name": "Maulik" }, "message": "@kazu kulfi suptwin", "time_text": "2:06" },
+            { "action_type": "add_chat_item", "author": { "id": "UChK7G1RhUbIUyvRVRpOZXmQ", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/3xxxyl5N6zh88ru_RaXqQf93oR9KSSUYIsg1wlVIO7oobG9G27_x6b_1zrb7FPmo7SRcsYtz" }], "name": "Md Tanzeel Khan " }, "emotes": [{ "id": "UCkszU2WH9gy1mb0dV-11UJg/m8MfY4jbFsWJhL0PyouA2Ak", "images": [{ "id": "source", "url": "https://yt3.ggpht.com/I0Mem9dU_IZ4a9cQPzR0pUJ8bH-882Eg0sDQjBmPcHA6Oq0uXOZcsjPvPbtormx91Ha2eRA" }], "is_custom_emoji": true, "name": ":face-red-heart-shape:" }, { "id": "UCkszU2WH9gy1mb0dV-11UJg/YvgfY-LIBpjChgHKyYCQBg", "images": [{ "id": "source", "url": "https://yt3.ggpht.com/y8ppa6GcJoRUdw7GwmjDmTAnSkeIkUptZMVQuFmFaTlF_CVIL7YP7hH7hd0TJbd8p9w67IM" }], "is_custom_emoji": true, "name": ":hand-orange-covering-eyes:" }], "message": "vish babu:face-red-heart-shape::face-red-heart-shape::face-red-heart-shape:", "time_text": "2:07" },
+            { "action_type": "add_chat_item", "author": { "id": "UCo2SNaErplyzAWmWgENChWA", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/_ZGcMNQweTmV7t6wjLKzEBBO9KJmmQwXHwxog2EAsLJ4ks5M4Sp0jEJA-YtHUeBh3_R7HPprPf0" }], "name": "Shivananda Padhy" }, "message": "aur bhay kya halchal vishiiii", "time_text": "2:10" },
+            { "action_type": "add_chat_item", "author": { "id": "UCPDGrwKnKDqhRXXLwv-G0eA", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/4wDbKnC4RThGh6Y_TLboS9MGxiWtSSRVmZ_d5ZKWNYQegI0UuIgbT9t2hsXArAhsJyuhFBV9ZHY" }], "name": "Bangu Jelly" }, "message": "yoo", "time_text": "2:10" },
+            { "action_type": "add_chat_item", "author": { "badges": [{ "title": "Member (2 months)" }], "id": "UCXCmlOKQ3DfW4aQPHTU41-A", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/XnDsjc2XD6LnfYQiU3HaQyF40lJ3ghWsF1ojOlv6QD0kn1Pn7LxyYDMIX76-kYRhFP_NK88jGGA" }], "name": "chaitanya s" }, "message": "yoo @Maulik", "time_text": "2:11" },
+            { "action_type": "add_chat_item", "author": { "id": "UC2uYc039mJyJspnc0nkT85w", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/WD8gBFPjD2QM6M0n9PSJlyXgc4KSjN7QCQkbBDVWSleQwJrFgyzhaQC4QC-Rwr79ndKCaAK1" }], "name": "Mr.chopra " }, "emotes": [{ "id": "\ud83d\ude2d", "images": [{ "id": "source", "url": "https://fonts.gstatic.com/s/e/notoemoji/15.1/1f62d/72.png" }], "is_custom_emoji": false, "name": ":loudly_crying_face:" }], "message": "twitch :loudly_crying_face:", "time_text": "2:16" },
+            { "action_type": "add_chat_item", "author": { "id": "UCsb47bPBxFZZJvo9-jKihWA", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/yJvBaJUPINDhjKsjPraXuzer1VLNBT6YTiqIjdRkAIsyiNLEE9uFV69I9AZjL5uCnD2Dw6AKTy8" }], "name": "Suros" }, "emotes": [{ "id": "UCkszU2WH9gy1mb0dV-11UJg/m8MfY4jbFsWJhL0PyouA2Ak", "images": [{ "id": "source", "url": "https://yt3.ggpht.com/I0Mem9dU_IZ4a9cQPzR0pUJ8bH-882Eg0sDQjBmPcHA6Oq0uXOZcsjPvPbtormx91Ha2eRA" }], "is_custom_emoji": true, "name": ":face-red-heart-shape:" }], "message": ":face-red-heart-shape::face-red-heart-shape:", "time_text": "2:20" },
+            { "action_type": "add_chat_item", "author": { "id": "UC4hmZvzlybFze5DQFHktq4Q", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/b3iZQprGRG8w-FdVOjSIERx-UyezKLyrj-1sDWsWnZb-wUkgo4FKn_fiwGRDc978kvZd_geoEA" }], "name": "Ram Khapandi" }, "message": "bhai ap ko mafia ka early access nay mila kya?", "time_text": "2:21" },
+            { "action_type": "add_chat_item", "author": { "id": "UCjW5x3ie-US-ESCyTWSHuAA", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/7T-VxcOHl2S9WRbED8I4dY8rH2gsVS2chxHd60iv0b1gvPfPGcVN7Qk1fQmIW-KPwM-Pn1Fm" }], "name": "Danish " }, "message": "oh pehli baar me time pe", "time_text": "2:23" },
+            { "action_type": "add_chat_item", "author": { "badges": [{ "title": "New member" }], "id": "UC6-E6gplbzKDmcPR3_4RUGQ", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/u9Jwjnue2EhUl0fLiU-xTi9mTpZTQqxrjtMX-roiasc_IIm0IVY-bn0KN3XqtPArATg6z4Nrlzk" }], "name": "Maulik" }, "message": "yo", "time_text": "2:23" },
+            { "action_type": "add_chat_item", "author": { "id": "UCPP_QA5lufYunSHzlmPXlpA", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/-wd6rGCpHsLvLJt7do2mxYV5f2LzGamSFqKQvVwdIRCR7FsILR6ozOVMrP_IVQsCzuV8nx0l" }], "name": "SENTRY" }, "message": "hello vish bhai", "time_text": "2:24" },
+            { "action_type": "add_chat_item", "author": { "id": "UCPDGrwKnKDqhRXXLwv-G0eA", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/4wDbKnC4RThGh6Y_TLboS9MGxiWtSSRVmZ_d5ZKWNYQegI0UuIgbT9t2hsXArAhsJyuhFBV9ZHY" }], "name": "Bangu Jelly" }, "message": "wooo", "time_text": "2:24" },
+            { "action_type": "add_chat_item", "author": { "id": "UC-FMv3TYkeMiAfgXuRt2g9Q", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/1I_OJTwLSfgLD98g_hYuKmdah7nn2pjrqdIpm-Ytypp7jbclwVnK-YGURM-prCtiKKCzqh_vKA" }], "name": "Mohit Sonara" }, "message": "khana khaya ke nai", "time_text": "2:28" },
+            { "action_type": "add_chat_item", "author": { "id": "UCXoIglO57v1ckAM7AupHrrg", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/v_6epdaFUDSbEvYY8Kz7YnAgeomILb1eINJrUsjyTmSmNy9XQWLgToQ75yKEVdM9ajUxNjmvhw" }], "name": "Abhishek Sharma" }, "message": "Yo Vish bhai", "time_text": "2:29" },
+            { "action_type": "add_chat_item", "author": { "id": "UCrW6gEU_6786UZUhL38urbg", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/fhn9HXso2CZ4Hjc-VFZUp1G_nND72JTo-okiZ10c9FdO3Q8_SUBxrDEkPtM1KlgQzIKZdEiF" }], "name": "kel" }, "message": "LVISH", "time_text": "2:30" },
+            { "action_type": "add_chat_item", "author": { "id": "UChhYnpK998fjHc_FLKfJO9Q", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/ytc/AIdro_nn2r27xgt-QLsA4NOafS588bIhGJEP80r8XEC4pJEMwtmsmIosL5hG9gzQ2AyEbG8G0A" }], "name": "Salman Khan" }, "message": "wish me happy birthday Ashu", "time_text": "2:33" },
+            { "action_type": "add_chat_item", "author": { "badges": [{ "title": "New member" }], "id": "UC6-E6gplbzKDmcPR3_4RUGQ", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/u9Jwjnue2EhUl0fLiU-xTi9mTpZTQqxrjtMX-roiasc_IIm0IVY-bn0KN3XqtPArATg6z4Nrlzk" }], "name": "Maulik" }, "message": "hello", "time_text": "2:35" },
+            { "action_type": "add_chat_item", "author": { "id": "UCsb47bPBxFZZJvo9-jKihWA", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/yJvBaJUPINDhjKsjPraXuzer1VLNBT6YTiqIjdRkAIsyiNLEE9uFV69I9AZjL5uCnD2Dw6AKTy8" }], "name": "Suros" }, "message": "hello", "time_text": "2:35" },
+            { "action_type": "add_chat_item", "author": { "id": "UCPDGrwKnKDqhRXXLwv-G0eA", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/4wDbKnC4RThGh6Y_TLboS9MGxiWtSSRVmZ_d5ZKWNYQegI0UuIgbT9t2hsXArAhsJyuhFBV9ZHY" }], "name": "Bangu Jelly" }, "message": "hello", "time_text": "2:36" },
+            { "action_type": "add_chat_item", "author": { "badges": [{ "title": "Member (2 months)" }], "id": "UCWo7EJk4xaWw3V7TXQ_mXlA", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/OBjBJDE8DxoSk2Pfver_UH9ZHW40-UXtE7_mK-4VHX_0prxgmlA-_0qx0gKjb6mvOO5oDt69" }], "name": "Anish" }, "message": "yoo", "time_text": "2:40" },
+            { "action_type": "add_chat_item", "author": { "badges": [{ "icon_name": "moderator", "title": "Moderator" }, { "title": "Member (2 months)" }], "id": "UCY0eRt2aOSy1uWsKfYjNsSA", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/sUf2gyaFUhCvvLWPg2pWZhNlppAUvELCi25GZF8L-sW3eGaNUYsxMYpwRsAhOoNHLJqhGk9R" }], "name": "Arif" }, "message": "yea", "time_text": "2:41" },
+            { "action_type": "add_chat_item", "author": { "id": "UC4hmZvzlybFze5DQFHktq4Q", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/b3iZQprGRG8w-FdVOjSIERx-UyezKLyrj-1sDWsWnZb-wUkgo4FKn_fiwGRDc978kvZd_geoEA" }], "name": "Ram Khapandi" }, "emotes": [{ "id": "\ud83d\ude05", "images": [{ "id": "source", "url": "https://fonts.gstatic.com/s/e/notoemoji/15.1/1f605/72.png" }], "is_custom_emoji": false, "name": ":grinning_face_with_sweat:" }], "message": "nah bhai:grinning_face_with_sweat:", "time_text": "2:42" },
+            { "action_type": "add_chat_item", "author": { "badges": [{ "title": "New member" }], "id": "UC6-E6gplbzKDmcPR3_4RUGQ", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/u9Jwjnue2EhUl0fLiU-xTi9mTpZTQqxrjtMX-roiasc_IIm0IVY-bn0KN3XqtPArATg6z4Nrlzk" }], "name": "Maulik" }, "message": "thik thik", "time_text": "2:44" },
+            { "action_type": "add_chat_item", "author": { "id": "UCPDGrwKnKDqhRXXLwv-G0eA", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/4wDbKnC4RThGh6Y_TLboS9MGxiWtSSRVmZ_d5ZKWNYQegI0UuIgbT9t2hsXArAhsJyuhFBV9ZHY" }], "name": "Bangu Jelly" }, "message": "hello", "time_text": "2:45" },
+            { "action_type": "add_chat_item", "author": { "badges": [{ "title": "Member (6 months)" }], "id": "UClpFFjb4ofbFf9JFQVtpWUw", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/Ow64pn9BHej2e90NX7Zn00PiXRGYdA8VMTZUQ1kzSXgYZ9YlhfjJ074hG32fRvCsO9q3UGya7Q" }], "name": "Kazu kulfi" }, "message": "Aap jaise bade youtuber ko early access nahi mila??", "time_text": "2:45" },
+            { "action_type": "add_chat_item", "author": { "id": "UCsQ2Z6r3d4cQcsJ4CTtnOjQ", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/ytc/AIdro_mC0wWK2aABDgnzAtAEFzXnz9epHKnIgCBlm6Fjs_u-5Q" }], "name": "Rishabh Rathour" }, "emotes": [{ "id": "\ud83d\udc80", "images": [{ "id": "source", "url": "https://fonts.gstatic.com/s/e/notoemoji/15.1/1f480/72.png" }], "is_custom_emoji": false, "name": ":skull:" }], "message": "vish ka aura :skull:", "time_text": "2:45" },
+            { "action_type": "add_chat_item", "author": { "id": "UClNX1802y_gYolOFC9i4cEQ", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/nijiehFQAkfWG77q2GF3IgzwQpZ5mGcpCi0KPuz3B89168J-AgeDRXSkTv1DI4xzipEUTzI7xg" }], "name": "1 cup 2 Senpai" }, "message": "neon man", "time_text": "2:51" },
+            { "action_type": "add_chat_item", "author": { "id": "UCo2SNaErplyzAWmWgENChWA", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/_ZGcMNQweTmV7t6wjLKzEBBO9KJmmQwXHwxog2EAsLJ4ks5M4Sp0jEJA-YtHUeBh3_R7HPprPf0" }], "name": "Shivananda Padhy" }, "message": "yo yo yo wassuap vish", "time_text": "2:52" },
+            { "action_type": "add_chat_item", "author": { "id": "UCsb47bPBxFZZJvo9-jKihWA", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/yJvBaJUPINDhjKsjPraXuzer1VLNBT6YTiqIjdRkAIsyiNLEE9uFV69I9AZjL5uCnD2Dw6AKTy8" }], "name": "Suros" }, "message": "coolie trailer song", "time_text": "2:54" },
+            { "action_type": "add_chat_item", "author": { "badges": [{ "title": "Member (2 months)" }], "id": "UCKgnoU_kFI4a2gCVsc7b5FA", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/aI8G8WVUn1rG7KQ7B0nI38WOweliwaP_6ao_Ssrh1YGj9ue21f-Y1sHm-KjxbSC09uMo8n3fJhA" }], "name": "Doomed " }, "message": "Aah tuuu", "time_text": "2:54" },
+            { "action_type": "add_chat_item", "author": { "badges": [{ "title": "Member (2 months)" }], "id": "UCXCmlOKQ3DfW4aQPHTU41-A", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/XnDsjc2XD6LnfYQiU3HaQyF40lJ3ghWsF1ojOlv6QD0kn1Pn7LxyYDMIX76-kYRhFP_NK88jGGA" }], "name": "chaitanya s" }, "message": "powerhouse better", "time_text": "2:55" },
+            { "action_type": "add_chat_item", "author": { "badges": [{ "title": "Member (2 months)" }], "id": "UCWo7EJk4xaWw3V7TXQ_mXlA", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/OBjBJDE8DxoSk2Pfver_UH9ZHW40-UXtE7_mK-4VHX_0prxgmlA-_0qx0gKjb6mvOO5oDt69" }], "name": "Anish" }, "emotes": [{ "id": "UCFX8baBMCv7FMICtHBg3TGg/vfBGaOjbJ--X_9EP0LfroQI", "images": [{ "id": "source", "url": "https://yt3.ggpht.com/bwbT4NNA4-hSNreXj1mWaGYXmi62qJVDyXzPxVV9IItHZ70Ve_fDXIKu0HT2i2iwZiv1vzDCtw" }], "is_custom_emoji": true, "name": ":_VishCinema:" }], "message": "Mafia lessgooo:_VishCinema:", "time_text": "2:55" },
+            { "action_type": "add_chat_item", "author": { "id": "UCD5frZNA2jMbEitfP4zNmKA", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/F483ubXj_dKDMza7DGfvjaGU6HSERpC5xHkgc-4etjHGW7CMYbWrJXUR-A6a4P6b12Wfx3QRwY0" }], "name": "VINTAGE" }, "message": "cool to hai", "time_text": "2:56" },
+            { "action_type": "add_chat_item", "author": { "badges": [{ "title": "Member (1 year)" }], "id": "UChnaoR4XWT9uoF797sEwA9Q", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/lou_0NQwxceiW61AfUWzyZaqdjgp1GbYRocqhlldj4MtOmR_oD3KwJBHKgiQc9Do32rpZ3zd" }], "name": "Swarup Ranjan Sahoo" }, "message": "yo bhai kaisa hai", "time_text": "2:56" },
+            { "action_type": "add_chat_item", "author": { "id": "UChK7G1RhUbIUyvRVRpOZXmQ", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/3xxxyl5N6zh88ru_RaXqQf93oR9KSSUYIsg1wlVIO7oobG9G27_x6b_1zrb7FPmo7SRcsYtz" }], "name": "Md Tanzeel Khan " }, "message": "vishu aapke awaaz ke wajh se pani nikal aata hai", "time_text": "2:58" },
+            { "action_type": "add_chat_item", "author": { "id": "UCcwC8yJNXaJYtvNdIEUwccg", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/ytc/AIdro_ns2X553yATn-a4dNbQlYESX-WAONmWWrr6QFRM_G7o0VE" }], "name": "Jondeep Nath" }, "message": "ha bhai", "time_text": "3:02" },
+            { "action_type": "add_chat_item", "author": { "badges": [{ "title": "New member" }], "id": "UC6-E6gplbzKDmcPR3_4RUGQ", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/u9Jwjnue2EhUl0fLiU-xTi9mTpZTQqxrjtMX-roiasc_IIm0IVY-bn0KN3XqtPArATg6z4Nrlzk" }], "name": "Maulik" }, "message": "acha ok", "time_text": "3:04" },
+            { "action_type": "add_chat_item", "author": { "id": "UC4hmZvzlybFze5DQFHktq4Q", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/b3iZQprGRG8w-FdVOjSIERx-UyezKLyrj-1sDWsWnZb-wUkgo4FKn_fiwGRDc978kvZd_geoEA" }], "name": "Ram Khapandi" }, "message": "war k premier me jaoge ya nay", "time_text": "3:06" },
+            { "action_type": "add_chat_item", "author": { "id": "UCKBh9Ipy11Ic8z4CyNmVYLQ", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/fuV40MAfRO6MnKrndUWLFhFN8Uuj92D74gHB8WjZh67clRP1AVPwFZBEqsGyO3nIQVnrTjFWxw" }], "name": "Caraxes" }, "message": "hello bhai", "time_text": "3:07" },
+            { "action_type": "add_chat_item", "author": { "id": "UChhYnpK998fjHc_FLKfJO9Q", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/ytc/AIdro_nn2r27xgt-QLsA4NOafS588bIhGJEP80r8XEC4pJEMwtmsmIosL5hG9gzQ2AyEbG8G0A" }], "name": "Salman Khan" }, "message": "wish me happy birthday Ashu", "time_text": "3:08" },
+            { "action_type": "add_chat_item", "author": { "id": "UChK7G1RhUbIUyvRVRpOZXmQ", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/3xxxyl5N6zh88ru_RaXqQf93oR9KSSUYIsg1wlVIO7oobG9G27_x6b_1zrb7FPmo7SRcsYtz" }], "name": "Md Tanzeel Khan " }, "emotes": [{ "id": "UCkszU2WH9gy1mb0dV-11UJg/m8MfY4jbFsWJhL0PyouA2Ak", "images": [{ "id": "source", "url": "https://yt3.ggpht.com/I0Mem9dU_IZ4a9cQPzR0pUJ8bH-882Eg0sDQjBmPcHA6Oq0uXOZcsjPvPbtormx91Ha2eRA" }], "is_custom_emoji": true, "name": ":face-red-heart-shape:" }], "message": "kya bhari awaaz hai aapke:face-red-heart-shape:", "time_text": "3:14" },
+            { "action_type": "add_chat_item", "author": { "badges": [{ "icon_name": "moderator", "title": "Moderator" }, { "title": "Member (2 months)" }], "id": "UCY0eRt2aOSy1uWsKfYjNsSA", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/sUf2gyaFUhCvvLWPg2pWZhNlppAUvELCi25GZF8L-sW3eGaNUYsxMYpwRsAhOoNHLJqhGk9R" }], "name": "Arif" }, "message": "monica nhi suna ", "time_text": "3:17" },
+            { "action_type": "add_chat_item", "author": { "id": "UCrW6gEU_6786UZUhL38urbg", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/fhn9HXso2CZ4Hjc-VFZUp1G_nND72JTo-okiZ10c9FdO3Q8_SUBxrDEkPtM1KlgQzIKZdEiF" }], "name": "kel" }, "message": "md tanzeel chhiii sasur", "time_text": "3:17" },
+            { "action_type": "add_chat_item", "author": { "id": "UC-prxlUh14vHVHtwcaz8jqw", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/ytc/AIdro_lE-2v4pt1Am5Vt4Pedf4xjFjaVCExlg_cJVl7OY2xcwvV1BhXRzUSHIHLwFa5dONFuTw" }], "name": "Atul Raj" }, "message": "marathon stream???", "time_text": "3:18" },
+            { "action_type": "add_chat_item", "author": { "id": "UCjW5x3ie-US-ESCyTWSHuAA", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/7T-VxcOHl2S9WRbED8I4dY8rH2gsVS2chxHd60iv0b1gvPfPGcVN7Qk1fQmIW-KPwM-Pn1Fm" }], "name": "Danish " }, "message": "war song ka promo kesa laga", "time_text": "3:18" },
+            { "action_type": "add_chat_item", "author": { "id": "UCPDGrwKnKDqhRXXLwv-G0eA", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/4wDbKnC4RThGh6Y_TLboS9MGxiWtSSRVmZ_d5ZKWNYQegI0UuIgbT9t2hsXArAhsJyuhFBV9ZHY" }], "name": "Bangu Jelly" }, "message": "cooli hot war flop", "time_text": "3:28" },
+            { "action_type": "add_chat_item", "author": { "id": "UCsb47bPBxFZZJvo9-jKihWA", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/yJvBaJUPINDhjKsjPraXuzer1VLNBT6YTiqIjdRkAIsyiNLEE9uFV69I9AZjL5uCnD2Dw6AKTy8" }], "name": "Suros" }, "message": "mobsta mast laga maiko", "time_text": "3:31" },
+            { "action_type": "add_chat_item", "author": { "id": "UCKBh9Ipy11Ic8z4CyNmVYLQ", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/fuV40MAfRO6MnKrndUWLFhFN8Uuj92D74gHB8WjZh67clRP1AVPwFZBEqsGyO3nIQVnrTjFWxw" }], "name": "Caraxes" }, "message": "mobsta suno maja aayega", "time_text": "3:31" },
+            { "action_type": "add_chat_item", "author": { "id": "UC3Tkpn5jOXFtMvleClzVykQ", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/ytc/AIdro_n1H5f93yWLYNGM1g_LNdrDwFnZEPZ0ox8VmQvIkoXYZHau1yJHu7VtlsqOO0SZLCE6SA" }], "name": "userun" }, "message": "monica badhiya hai", "time_text": "3:34" },
+            { "action_type": "add_chat_item", "author": { "badges": [{ "title": "Member (2 months)" }], "id": "UCKgnoU_kFI4a2gCVsc7b5FA", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/aI8G8WVUn1rG7KQ7B0nI38WOweliwaP_6ao_Ssrh1YGj9ue21f-Y1sHm-KjxbSC09uMo8n3fJhA" }], "name": "Doomed " }, "message": "Aah tuuu", "time_text": "3:37" },
+            { "action_type": "add_chat_item", "author": { "badges": [{ "title": "Member (6 months)" }], "id": "UC62Sz5XorLoStPwrfZjb1IQ", "images": [{ "id": "source", "url": "https://yt4.ggpht.com/ytc/AIdro_nbSlV_nVD3nJgOIoifZ9HCpA--luiV-1elobVtdos" }], "name": "Kishor Biswas" }, "message": "kya baat he , amish or ap aktime pe live stream", "time_text": "3:38" },
+        ];
+
+        const messagesContainer = document.getElementById('chat-messages-container');
+
+        const emoteMap = chatData.flatMap(item => item.emotes || []).reduce((acc, emote) => {
+            if (emote.shortcuts) {
+                emote.shortcuts.forEach(shortcut => {
+                    const emoteImgUrl = emote.images.find(img => img.id === 'source')?.url || emote.images[0]?.url;
+                    if(emoteImgUrl) {
+                       acc[shortcut] = `<img src="${emoteImgUrl}" alt="${emote.name}" class="emote">`;
+                    }
+                });
+            }
+            return acc;
+        }, {});
+
+        function processMessage(messageText) {
+            let processedText = messageText;
+            // A simple regex to find :emote: style shortcuts
+            const regex = /(:[a-zA-Z0-9\-_]+:)|(<3|B\)|B-\)|8\)|8-\)|>:-\(|>=|T_T|;_;|}:-\)|}=)/g;
+            processedText = processedText.replace(regex, (match) => {
+                return emoteMap[match] || match;
+            });
+            return processedText;
+        }
+
+        chatData.forEach(item => {
+            if (item.action_type === 'add_chat_item') {
+                const messageElement = document.createElement('div');
+                messageElement.classList.add('chat-message');
+
+                const authorAvatarUrl = item.author.images.find(img => img.id === 'source')?.url || 'https://yt3.ggpht.com/a/default-user=s40-c-k-c0x00ffffff-no-rj';
+
+                let badgesHTML = '';
+                if (item.author.badges) {
+                    item.author.badges.forEach(badge => {
+                        let badgeClass = '';
+                        if (badge.title.toLowerCase().includes('moderator')) badgeClass = 'badge-moderator';
+                        else if (badge.title.toLowerCase().includes('member')) badgeClass = 'badge-member';
+                        badgesHTML += `<span class="author-badge ${badgeClass}">${badge.title}</span>`;
+                    });
+                }
+                
+                let authorNameClass = 'author-name';
+                 if (item.author.badges) {
+                    if (item.author.badges.some(b => b.title.toLowerCase().includes('moderator'))) {
+                        authorNameClass += ' moderator';
+                    } else if (item.author.badges.some(b => b.title.toLowerCase().includes('member'))) {
+                        authorNameClass += ' member';
+                    }
+                }
+
+                messageElement.innerHTML = `
+                    <img src="${authorAvatarUrl}" class="author-avatar" alt="${item.author.name}'s avatar">
+                    <div class="message-content">
+                        <div class="message-header">
+                            <span class="timestamp">${item.time_text}</span>
+                            <div class="author-info">
+                                ${badgesHTML}
+                                <span class="${authorNameClass}">${item.author.name}</span>
+                            </div>
+                        </div>
+                        <div class="message-text">${processMessage(item.message)}</div>
+                    </div>
+                `;
+                messagesContainer.appendChild(messageElement);
+            }
+        });
+
+        // Auto-scroll to the bottom
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    </script>
+
+</body>
+</html>
